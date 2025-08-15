@@ -4,7 +4,7 @@ use super::util::{
 use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, quote_spanned};
-use syn::{punctuated::IntoIter, Data, DataStruct, Expr, Field, Fields, LitStr, Type};
+use syn::{punctuated::IntoIter, Data, DataStruct, Expr, Field, Fields, LitStr};
 
 /// Method to derive an [ActiveModel](sea_orm::ActiveModel)
 pub fn expand_derive_active_model_trait(ident: Ident, data: Data) -> syn::Result<TokenStream> {
@@ -23,15 +23,18 @@ pub fn expand_derive_active_model_trait(ident: Ident, data: Data) -> syn::Result
     .into_iter();
 
     let derive_active_model = derive_active_model_traits(&ident, all_fields.clone())?;
-    // let derive_into_model = derive_into_model(&ident, all_fields)?;
+    let derive_into_model = derive_into_model(&ident, all_fields)?;
 
     Ok(quote!(
         #derive_active_model
-        // #derive_into_model
+        #derive_into_model
     ))
 }
 
-fn derive_active_model_traits(ident: &Ident, all_fields: IntoIter<Field>) -> syn::Result<TokenStream> {
+fn derive_active_model_traits(
+    ident: &Ident,
+    all_fields: IntoIter<Field>,
+) -> syn::Result<TokenStream> {
     let fields = all_fields.filter(field_not_ignored);
 
     let field: Vec<Ident> = fields.clone().map(format_field_ident).collect();
@@ -189,9 +192,9 @@ fn derive_into_model(ident: &Ident, model_fields: IntoIter<Field>) -> syn::Resul
 
     Ok(quote!(
         #[automatically_derived]
-        impl std::convert::TryFrom<ActiveModel> for #ident {
+        impl std::convert::TryFrom<#ident> for Model {
             type Error = sea_orm::DbErr;
-            fn try_from(a: ActiveModel) -> Result<Self, sea_orm::DbErr> {
+            fn try_from(a: #ident) -> Result<Self, sea_orm::DbErr> {
                 #(if matches!(a.#active_model_field, sea_orm::ActiveValue::NotSet) {
                     return Err(sea_orm::DbErr::AttrNotSet(stringify!(#active_model_field).to_owned()));
                 })*
@@ -204,8 +207,8 @@ fn derive_into_model(ident: &Ident, model_fields: IntoIter<Field>) -> syn::Resul
         }
 
         #[automatically_derived]
-        impl sea_orm::TryIntoModel<#ident> for ActiveModel {
-            fn try_into_model(self) -> Result<#ident, sea_orm::DbErr> {
+        impl sea_orm::TryIntoModel<Model> for #ident {
+            fn try_into_model(self) -> Result<Model, sea_orm::DbErr> {
                 self.try_into()
             }
         }

@@ -441,6 +441,19 @@ pub fn derive_active_model(input: TokenStream) -> TokenStream {
     }
 }
 
+/// Automatically derive ActiveModel traits for an ActiveMode struct.
+/// Different from DeriveActiveModel, this only implements the behaviour for ActiveModel, it doesn't automatically generate the ActiveModel struct.
+/// Requires `Model` type to be in current scope, importing the type works if `Model` is in the parent of `ActiveModel`. Compatible with aliases.
+/// ```
+/// # #[derive(Clone, Debug, DeriveActiveModelTrait)]
+/// # pub struct ActiveModel {
+/// #   pub id: ActiveValue<u64>,
+/// #   pub username: ActiveValue<String>,
+/// #   pub email: ActiveValue<String>,
+/// # }
+/// #
+/// # impl ActiveModelBehavior for ActiveModel {}
+/// ```
 #[cfg(feature = "derive")]
 #[proc_macro_derive(DeriveActiveModelTrait, attributes(sea_orm))]
 pub fn derive_active_model_trait(input: TokenStream) -> TokenStream {
