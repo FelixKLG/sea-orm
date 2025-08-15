@@ -441,6 +441,17 @@ pub fn derive_active_model(input: TokenStream) -> TokenStream {
     }
 }
 
+#[cfg(feature = "derive")]
+#[proc_macro_derive(DeriveActiveModelTrait, attributes(sea_orm))]
+pub fn derive_active_model_trait(input: TokenStream) -> TokenStream {
+    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+
+    match derives::expand_derive_active_model_trait(ident, data) {
+        Ok(ts) => ts.into(),
+        Err(e) => e.to_compile_error().into(),
+    }
+}
+
 /// Derive into an active model
 #[cfg(feature = "derive")]
 #[proc_macro_derive(DeriveIntoActiveModel, attributes(sea_orm))]
